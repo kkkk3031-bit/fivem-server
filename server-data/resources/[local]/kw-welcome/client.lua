@@ -12,6 +12,12 @@ AddEventHandler('playerSpawned', function()
   })
   Wait(1500)
   TriggerEvent('chat:addMessage', {
+    color = { 70, 224, 139 },
+    multiline = true,
+    args = { '🎮 New', 'F3 emotes · X hands up · Z crouch · B point · /hat /mask clothes · cars need fuel ⛽ · fun spots on map 🗺️' },
+  })
+  Wait(1500)
+  TriggerEvent('chat:addMessage', {
     color = { 88, 101, 242 },
     args = { '💬 Links', 'Discord: discord.gg/zbHbSsCUua · X: x.com/KhaledQ84Ever' },
   })

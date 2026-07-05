@@ -41,10 +41,33 @@ fivem start        start server (tmux + auto-restart supervisor)
 fivem stop         stop server
 fivem restart      restart server
 fivem status       running state + connect addresses
+fivem players      who's online right now (name + ping)
+fivem address      all ways to join (IP, fivem:// link, web page)
+fivem doctor       full health check + log problem scan
+fivem backup [n]   backup server-data to ~/fivem/backups (keep n, default 7)
+fivem update       upgrade FXServer to latest build (asks first)
 fivem console      attach to live server console (Ctrl-b d to detach)
 fivem cmd <text>   send a console command (e.g. fivem cmd say hello)
 fivem log [n]      show last n log lines
 ```
+
+## Mods
+
+All standalone (no framework, no database), installed to `server-data/resources/[local]` and re-fetched by `setup.sh`:
+
+| Mod | What | In game |
+|---|---|---|
+| [vMenu](https://github.com/TomGrobbe/vMenu) | cars, weapons, teleport, weather, outfits | <kbd>M</kbd> |
+| [pma-voice](https://github.com/AvarianKnight/pma-voice) | proximity voice chat | hold <kbd>N</kbd> |
+| [dpemotes](https://github.com/andristum/dpemotes) | 170+ emotes & dances | <kbd>F3</kbd> or `/e dance` |
+| [dpclothing](https://github.com/andristum/dpclothing) | toggle clothes | `/hat` `/mask` `/shirt` … |
+| [LegacyFuel](https://github.com/InZidiuZ/LegacyFuel) | real fuel, refill at stations | drive ⛽ |
+| [bob74_ipl](https://github.com/Bob74/bob74_ipl) | 40+ open interiors | explore |
+| kw-hands *(ours)* | hands up / crouch / point | <kbd>X</kbd> / <kbd>Z</kbd> / <kbd>B</kbd> |
+| kw-blips *(ours)* | fun meetup spots on the map | open map |
+| kw-loadingscreen, kw-speedo, kw-presence, kw-welcome *(ours)* | branding, km/h speedo, Discord presence, join messages | automatic |
+
+Support libs: [PolyZone](https://github.com/mkafrin/PolyZone), [interact-sound](https://github.com/plunkettscott/interact-sound).
 
 ## Setup on a fresh machine
 
@@ -55,7 +78,7 @@ fivem key cfxk_xxxx   # free key from https://portal.cfx.re/servers/registration
 fivem start
 ```
 
-`setup.sh` downloads the latest FXServer build, pulls the base [cfx-server-data](https://github.com/citizenfx/cfx-server-data) resources, installs the CLI, and registers both crons. Big binaries and the license key are never committed — see [`.gitignore`](.gitignore).
+`setup.sh` downloads the latest FXServer build, pulls the base [cfx-server-data](https://github.com/citizenfx/cfx-server-data) resources, installs the full mods pack, installs the CLI, and registers all crons (autostart, watchdog, nightly 5:00 backup, log rotation). Big binaries and the license key are never committed — see [`.gitignore`](.gitignore).
 
 ## Layout
 

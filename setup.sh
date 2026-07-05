@@ -54,9 +54,10 @@ done
 # dpemotes: no MySQL on this box — keep SQL keybinding off
 sed -i 's/SqlKeybinding = true,/SqlKeybinding = false, -- no database on this server/' "$LOCAL/dpemotes/Config.lua" || true
 
-echo "== 1f/4 nightly backup cron (05:00, keep 7) =="
-(crontab -l 2>/dev/null | grep -v 'fivem-backup'
+echo "== 1f/4 nightly backup + log-rotate crons =="
+(crontab -l 2>/dev/null | grep -vE 'fivem-backup|fivem-logrotate'
  echo '0 5 * * * $HOME/.local/bin/fivem backup >> $HOME/fivem/backup.log 2>&1 # fivem-backup'
+ echo '5 5 * * * [ $(stat -c%s $HOME/fivem/fxserver.log 2>/dev/null || echo 0) -gt 52428800 ] && cp $HOME/fivem/fxserver.log $HOME/fivem/fxserver.log.1 && truncate -s 0 $HOME/fivem/fxserver.log # fivem-logrotate'
 ) | crontab -
 
 echo "== 2/4 fivem CLI =="
