@@ -28,6 +28,19 @@ if [ ! -d "$BASE/server-data/resources/[local]/vMenu" ]; then
   rm /tmp/vmenu.zip
 fi
 
+echo "== 1d/4 pma-voice + bob74_ipl =="
+LOCAL="$BASE/server-data/resources/[local]"
+if [ ! -d "$LOCAL/pma-voice" ]; then
+  PTAG=$(curl -s https://api.github.com/repos/AvarianKnight/pma-voice/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')
+  curl -sL "https://github.com/AvarianKnight/pma-voice/archive/refs/tags/$PTAG.zip" -o /tmp/pma.zip
+  unzip -q -o /tmp/pma.zip -d /tmp && mv /tmp/pma-voice-* "$LOCAL/pma-voice" && rm /tmp/pma.zip
+fi
+if [ ! -d "$LOCAL/bob74_ipl" ]; then
+  ITAG=$(curl -s https://api.github.com/repos/Bob74/bob74_ipl/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')
+  curl -sL "https://github.com/Bob74/bob74_ipl/archive/refs/tags/$ITAG.zip" -o /tmp/ipl.zip
+  unzip -q -o /tmp/ipl.zip -d /tmp && mv /tmp/bob74_ipl-* "$LOCAL/bob74_ipl" && rm /tmp/ipl.zip
+fi
+
 echo "== 2/4 fivem CLI =="
 mkdir -p "$HOME/.local/bin"
 cp "$BASE/bin/fivem" "$HOME/.local/bin/fivem"
