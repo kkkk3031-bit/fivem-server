@@ -1,0 +1,23 @@
+name: UDP join-port probe
+on: workflow_dispatch
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: getinfo over UDP 30120
+        run: |
+          python3 - <<'EOF'
+          import socket, sys
+          s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+          s.settimeout(8)
+          s.sendto(b'\xff\xff\xff\xffgetinfo ghprobe', ('72.60.89.132', 30120))
+          try:
+              data, addr = s.recvfrom(4096)
+              print('UDP-OK reply from', addr)
+              print(data.decode(errors='replace'))
+          except socket.timeout:
+              print('UDP-TIMEOUT — port unreachable from GitHub')
+              sys.exit(1)
+          EOF
