@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khaled's FiveM — Private GTA V Server</title>
+<meta name="description" content="Private FiveM server for khaled and friends. Check who's online and connect with one click.">
+<meta property="og:title" content="Khaled's FiveM — Private GTA V Server">
+<meta property="og:description" content="Press CONNECT and spawn in. Private server · Kuwait · 24/7.">
+<meta name="theme-color" content="#0B0E14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230B0E14'/%3E%3Ccircle cx='256' cy='256' r='150' fill='none' stroke='%23FFB021' stroke-width='14'/%3E%3Cpath d='M 210 232 A 60 60 0 1 0 302 232' stroke='%23FFB021' stroke-width='18' stroke-linecap='round' fill='none'/%3E%3Cline x1='256' y1='182' x2='256' y2='244' stroke='%23FFB021' stroke-width='18' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0E14;
+    --panel: #11161F;
+    --panel-2: #161C28;
+    --edge: #232C3D;
+    --amber: #FFB021;
+    --amber-dim: rgba(255,176,33,.55);
+    --text: #ECF0F6;
+    --muted: #8A94A6;
+    --faint: #5A6478;
+    --on: #46E08B;
+    --off: #FF5C5C;
+    --display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+    --body: "Inter", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 90% 55% at 50% -12%, rgba(255,176,33,.10), transparent),
+      radial-gradient(ellipse 60% 40% at 50% 115%, rgba(255,176,33,.05), transparent);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    padding: 44px 20px 34px;
+  }
+
+  /* page-load reveal */
+  .reveal { opacity: 0; transform: translateY(10px); animation: in .55s ease forwards; }
+  .reveal:nth-child(2) { animation-delay: .1s; }
+  .reveal:nth-child(3) { animation-delay: .2s; }
+  .reveal:nth-child(4) { animation-delay: .3s; }
+  .reveal:nth-child(5) { animation-delay: .4s; }
+  @keyframes in { to { opacity: 1; transform: none; } }
+
+  header { text-align: center; }
+  .eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: .34em;
+    color: var(--amber); text-transform: uppercase;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: clamp(58px, 15vw, 96px);
+    line-height: .94;
+    letter-spacing: .015em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  h1 .accent { color: var(--amber); }
+  .flag {
+    width: 132px; height: 5px; border-radius: 3px;
+    margin: 14px auto 10px;
+    background: linear-gradient(90deg, #0a0a0a 0 22%, #007A3D 22% 48%, #fff 48% 74%, #CE1126 74% 100%);
+    outline: 1px solid var(--edge);
+  }
+  .sub { color: var(--muted); font-size: 13.5px; font-weight: 500; letter-spacing: .06em; }
+  .sub bdi { color: var(--faint); }
+
+  /* status card */
+  .card {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--edge);
+    border-radius: 16px;
+    width: min(420px, 100%);
+    padding: 18px 22px 16px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.4);
+  }
+  .card-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .stat { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--faint); flex: none; }
+  .dot.on  { background: var(--on);  box-shadow: 0 0 12px rgba(70,224,139,.8); }
+  .dot.off { background: var(--off); box-shadow: 0 0 12px rgba(255,92,92,.7); }
+  @keyframes breathe { 50% { opacity: .55; } }
+  .dot.on { animation: breathe 2.4s ease-in-out infinite; }
+  .state { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: .14em; }
+  .players { font-family: var(--display); font-weight: 900; font-size: 34px; letter-spacing: .02em; }
+  .players small { color: var(--muted); font-size: 16px; font-weight: 700; }
+  .card-rows { border-top: 1px solid var(--edge); margin-top: 13px; padding-top: 11px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 7px 18px; }
+  .row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
+  .row .k { color: var(--faint); font-weight: 500; }
+  .row .v { color: var(--muted); font-weight: 600; text-align: right; }
+
+  /* engine-start connect button */
+  .startwrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  a.start {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 196px; height: 196px; border-radius: 50%;
+    background: radial-gradient(circle at 50% 36%, #1D2432, #0F131C 72%);
+    border: 2.5px solid var(--amber);
+    box-shadow: 0 0 0 9px #0F131C, 0 0 0 10px var(--edge), 0 10px 50px rgba(255,176,33,.28);
+    color: var(--amber);
+    text-decoration: none;
+    font-family: var(--display);
+    transition: transform .12s ease, box-shadow .25s ease;
+  }
+  a.start:hover, a.start:focus-visible {
+    box-shadow: 0 0 0 9px #0F131C, 0 0 0 10px var(--edge), 0 10px 70px rgba(255,176,33,.5);
+    transform: scale(1.03);
+  }
+  a.start:active { transform: scale(.96); }
+  a.start:focus-visible { outline: 3px solid var(--amber); outline-offset: 7px; }
+  .start svg { margin-bottom: 8px; }
+  .start .big { font-size: 34px; font-weight: 900; letter-spacing: .16em; }
+  .start .small { font-family: var(--body); font-size: 10.5px; font-weight: 600; color: var(--muted); letter-spacing: .22em; margin-top: 5px; text-transform: uppercase; }
+
+  .addr { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13.5px; color: var(--faint); }
+  .addr code { color: var(--text); font-family: inherit; }
+  button.copy {
+    background: var(--panel); border: 1px solid var(--edge); border-radius: 8px;
+    color: var(--muted); font-family: var(--body); font-size: 12px; font-weight: 600;
+    padding: 6px 12px; cursor: pointer; transition: color .15s, border-color .15s;
+  }
+  button.copy:hover { color: var(--text); border-color: var(--muted); }
+  button.copy:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  /* how-to steps */
+  .steps { display: flex; gap: 10px; width: min(420px, 100%); }
+  .step {
+    flex: 1; background: var(--panel); border: 1px solid var(--edge); border-radius: 12px;
+    padding: 12px 12px 11px; text-align: center;
+  }
+  .step .n { font-family: var(--display); font-weight: 900; font-size: 20px; color: var(--amber); }
+  .step .t { font-size: 11.5px; font-weight: 500; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+  .step a { color: var(--amber); text-decoration: none; }
+  .step a:hover { text-decoration: underline; }
+
+  footer { color: var(--faint); font-size: 11px; letter-spacing: .05em; text-align: center; }
+
+  @media (max-width: 430px) {
+    .steps { flex-direction: column; }
+    .step { display: flex; align-items: baseline; gap: 10px; text-align: left; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { animation: none; opacity: 1; transform: none; }
+    .dot.on { animation: none; }
+    a.start { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <header class="reveal">
+    <div class="eyebrow">Private Server · Kuwait</div>
+    <h1>Khaled's <span class="accent">FiveM</span></h1>
+    <div class="flag" aria-hidden="true"></div>
+    <div class="sub">GTA V multiplayer · online 24/7 · <bdi lang="ar">سيرفر خالد</bdi></div>
+  </header>
+
+  <div class="card reveal" role="status" aria-live="polite">
+    <div class="card-top">
+      <div class="stat">
+        <span class="dot" id="dot"></span>
+        <span class="state" id="state">CHECKING</span>
+      </div>
+      <div class="players"><span id="players">–</span><small id="max">/16</small></div>
+    </div>
+    <div class="card-rows">
+      <div class="row"><span class="k">Mode</span><span class="v" id="mode">—</span></div>
+      <div class="row"><span class="k">Map</span><span class="v" id="map">—</span></div>
+      <div class="row"><span class="k">Region</span><span class="v">Kuwait 🇰🇼</span></div>
+      <div class="row"><span class="k">Uptime</span><span class="v">24/7 auto</span></div>
+    </div>
+  </div>
+
+  <div class="startwrap reveal">
+    <a class="start" href="fivem://connect/72.60.89.132:30120" aria-label="Connect — opens FiveM and joins the server">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" aria-hidden="true">
+        <path d="M 12 10 A 13 13 0 1 0 28 10"/>
+        <line x1="20" y1="4" x2="20" y2="18"/>
+      </svg>
+      <span class="big">CONNECT</span>
+      <span class="small">opens FiveM</span>
+    </a>
+    <div class="addr">
+      <code>connect 72.60.89.132:30120</code>
+      <button class="copy" id="copy" type="button">copy</button>
+    </div>
+  </div>
+
+  <div class="steps reveal">
+    <div class="step"><div class="n">1</div><div class="t">Own GTA V &amp; install <a href="https://fivem.net" rel="noopener">FiveM</a></div></div>
+    <div class="step"><div class="n">2</div><div class="t">Press CONNECT above</div></div>
+    <div class="step"><div class="n">3</div><div class="t">Spawn in &amp; drive</div></div>
+  </div>
+
+  <footer class="reveal">Not affiliated with Cfx.re or Rockstar Games · If the button does nothing: FiveM → F8 → paste the command</footer>
+
+<script>
+  const $ = id => document.getElementById(id);
+  async function poll() {
+    try {
+      const s = await (await fetch('/api/status', { cache: 'no-store' })).json();
+      $('dot').className = 'dot ' + (s.online ? 'on' : 'off');
+      $('state').textContent = s.online ? 'ONLINE' : 'OFFLINE';
+      $('players').textContent = s.online ? s.players : '–';
+      $('max').textContent = '/' + s.maxPlayers;
+      $('mode').textContent = s.online ? (s.gametype || '—') : 'starting back up…';
+      $('map').textContent = s.online ? (s.map || '—') : '—';
+    } catch {
+      $('dot').className = 'dot';
+      $('state').textContent = 'CHECKING';
+    }
+  }
+  poll();
+  setInterval(poll, 10000);
+
+  $('copy').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText('connect 72.60.89.132:30120');
+      $('copy').textContent = 'copied!';
+    } catch { $('copy').textContent = 'select & copy'; }
+    setTimeout(() => $('copy').textContent = 'copy', 1600);
+  });
+</script>
+</body>
+</html>

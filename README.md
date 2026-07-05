@@ -71,9 +71,13 @@ fivem/
 └── license.key    Cfx.re key            (secret, not in git)
 ```
 
-## Related
+## Connect page
 
-- **[fivem-connect](https://github.com/khaledq84ever/fivem-connect)** — the live status + one-click connect page, deployed on Railway.
+The live status + one-click connect page lives in [`connect-page/`](connect-page/) and is deployed on Railway at [fivem-connect-production.up.railway.app](https://fivem-connect-production.up.railway.app):
+
+```bash
+cd connect-page && railway up --detach --service fivem-connect
+```
 
 ---
 
