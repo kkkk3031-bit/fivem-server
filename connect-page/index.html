@@ -11,7 +11,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230B0E14'/%3E%3Ccircle cx='256' cy='256' r='150' fill='none' stroke='%23FFB021' stroke-width='14'/%3E%3Cpath d='M 210 232 A 60 60 0 1 0 302 232' stroke='%23FFB021' stroke-width='18' stroke-linecap='round' fill='none'/%3E%3Cline x1='256' y1='182' x2='256' y2='244' stroke='%23FFB021' stroke-width='18' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Inter:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0B0E14;
@@ -26,10 +26,12 @@
     --on: #46E08B;
     --off: #FF5C5C;
     --display: "Big Shoulders Display", "Arial Narrow", sans-serif;
-    --body: "Inter", system-ui, sans-serif;
+    --body: "Inter", "IBM Plex Sans Arabic", system-ui, sans-serif;
+    --ar: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  [lang="ar"] { font-family: var(--ar); }
   html { -webkit-text-size-adjust: 100%; }
   body {
     background: var(--bg);
@@ -98,6 +100,7 @@
   @keyframes breathe { 50% { opacity: .55; } }
   .dot.on { animation: breathe 2.4s ease-in-out infinite; }
   .state { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: .14em; }
+  .state-ar { font-size: 11.5px; font-weight: 500; color: var(--muted); margin-top: 1px; }
   .players { font-family: var(--display); font-weight: 900; font-size: 34px; letter-spacing: .02em; }
   .players small { color: var(--muted); font-size: 16px; font-weight: 700; }
   .card-rows { border-top: 1px solid var(--edge); margin-top: 13px; padding-top: 11px;
@@ -147,10 +150,29 @@
   }
   .step .n { font-family: var(--display); font-weight: 900; font-size: 20px; color: var(--amber); }
   .step .t { font-size: 11.5px; font-weight: 500; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+  .step .t-ar { font-size: 11px; color: var(--faint); margin-top: 2px; }
   .step a { color: var(--amber); text-decoration: none; }
   .step a:hover { text-decoration: underline; }
 
-  footer { color: var(--faint); font-size: 11px; letter-spacing: .05em; text-align: center; }
+  footer { color: var(--faint); font-size: 11px; letter-spacing: .05em; text-align: center; display: grid; gap: 5px; }
+  .credit { font-size: 12px; color: var(--muted); }
+  .credit a { color: var(--amber); text-decoration: none; font-weight: 600; }
+  .credit a:hover { text-decoration: underline; }
+
+  /* discord join button */
+  a.discord {
+    display: none; /* shown by JS when an invite link is set */
+    align-items: center; gap: 9px;
+    background: #5865F2; color: #fff;
+    border-radius: 12px; padding: 11px 22px;
+    font-family: var(--body); font-weight: 600; font-size: 14px;
+    text-decoration: none;
+    box-shadow: 0 8px 26px rgba(88,101,242,.35);
+    transition: transform .12s ease, box-shadow .2s ease;
+  }
+  a.discord:hover { transform: translateY(-1px); box-shadow: 0 10px 32px rgba(88,101,242,.5); }
+  a.discord:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+  a.discord svg { flex: none; }
 
   @media (max-width: 430px) {
     .steps { flex-direction: column; }
@@ -165,25 +187,28 @@
 </head>
 <body>
   <header class="reveal">
-    <div class="eyebrow">Private Server · Kuwait</div>
+    <div class="eyebrow">Private Server · Kuwait · <bdi lang="ar">سيرفر خاص</bdi></div>
     <h1>Khaled's <span class="accent">FiveM</span></h1>
     <div class="flag" aria-hidden="true"></div>
-    <div class="sub">GTA V multiplayer · online 24/7 · <bdi lang="ar">سيرفر خالد</bdi></div>
+    <div class="sub">GTA V multiplayer · online 24/7 · <bdi lang="ar">قراند مع الربع · شغّال ٢٤ ساعة</bdi></div>
   </header>
 
   <div class="card reveal" role="status" aria-live="polite">
     <div class="card-top">
       <div class="stat">
         <span class="dot" id="dot"></span>
-        <span class="state" id="state">CHECKING</span>
+        <div>
+          <div class="state" id="state">CHECKING</div>
+          <div class="state-ar" lang="ar" id="stateAr">جاري التحقق…</div>
+        </div>
       </div>
       <div class="players"><span id="players">–</span><small id="max">/16</small></div>
     </div>
     <div class="card-rows">
-      <div class="row"><span class="k">Mode</span><span class="v" id="mode">—</span></div>
-      <div class="row"><span class="k">Map</span><span class="v" id="map">—</span></div>
-      <div class="row"><span class="k">Region</span><span class="v">Kuwait 🇰🇼</span></div>
-      <div class="row"><span class="k">Uptime</span><span class="v">24/7 auto</span></div>
+      <div class="row"><span class="k">Mode · <bdi lang="ar">الوضع</bdi></span><span class="v" id="mode">—</span></div>
+      <div class="row"><span class="k">Map · <bdi lang="ar">الخريطة</bdi></span><span class="v" id="map">—</span></div>
+      <div class="row"><span class="k">Region · <bdi lang="ar">المنطقة</bdi></span><span class="v"><bdi lang="ar">الكويت</bdi> 🇰🇼</span></div>
+      <div class="row"><span class="k">Uptime · <bdi lang="ar">التشغيل</bdi></span><span class="v">24/7</span></div>
     </div>
   </div>
 
@@ -194,7 +219,7 @@
         <line x1="20" y1="4" x2="20" y2="18"/>
       </svg>
       <span class="big">CONNECT</span>
-      <span class="small">opens FiveM</span>
+      <span class="small">opens FiveM · <bdi lang="ar">اضغط للدخول</bdi></span>
     </a>
     <div class="addr">
       <code>connect 72.60.89.132:30120</code>
@@ -202,21 +227,38 @@
     </div>
   </div>
 
+  <a class="discord reveal" id="discord" href="#" rel="noopener" target="_blank">
+    <svg width="22" height="17" viewBox="0 0 71 55" fill="currentColor" aria-hidden="true"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.4.4l-1.8 3.7a54 54 0 0 0-16.2 0L25.5.4a58.4 58.4 0 0 0-14.7 4.6C1.6 18.7-.9 32.2.3 45.4a58.9 58.9 0 0 0 18 9.1l3.8-6.2a38 38 0 0 1-6-2.9l1.5-1.1a41.9 41.9 0 0 0 36 0l1.5 1.1a38 38 0 0 1-6 2.9l3.8 6.2a58.7 58.7 0 0 0 18-9.1c1.5-15.3-2.4-28.6-10.8-40.5ZM23.7 37.3c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.4 7.2s-2.9 7.2-6.4 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.4 7.2s-2.8 7.2-6.4 7.2Z"/></svg>
+    <span>Join our Discord · <bdi lang="ar">انضم للديسكورد</bdi></span>
+  </a>
+
   <div class="steps reveal">
-    <div class="step"><div class="n">1</div><div class="t">Own GTA V &amp; install <a href="https://fivem.net" rel="noopener">FiveM</a></div></div>
-    <div class="step"><div class="n">2</div><div class="t">Press CONNECT above</div></div>
-    <div class="step"><div class="n">3</div><div class="t">Spawn in &amp; drive</div></div>
+    <div class="step"><div class="n">1</div><div class="t">Own GTA V &amp; install <a href="https://fivem.net" rel="noopener">FiveM</a><div class="t-ar" lang="ar">حمّل فايف إم (يحتاج قراند 5)</div></div></div>
+    <div class="step"><div class="n">2</div><div class="t">Press CONNECT above<div class="t-ar" lang="ar">اضغط زر الاتصال فوق</div></div></div>
+    <div class="step"><div class="n">3</div><div class="t">Spawn in &amp; drive<div class="t-ar" lang="ar">ادخل والعب مع الربع</div></div></div>
   </div>
 
-  <footer class="reveal">Not affiliated with Cfx.re or Rockstar Games · If the button does nothing: FiveM → F8 → paste the command</footer>
+  <footer class="reveal">
+    <div class="credit">Program by <a href="https://x.com/KhaledQ84Ever" rel="noopener" target="_blank">𝕏 @KhaledQ84Ever</a> · <bdi lang="ar">برمجة خالد</bdi></div>
+    <div>Not affiliated with Cfx.re or Rockstar Games · If the button does nothing: FiveM → F8 → paste the command</div>
+  </footer>
 
 <script>
   const $ = id => document.getElementById(id);
+
+  // paste the Discord invite link here to show the Discord button
+  const DISCORD_INVITE = "https://discord.gg/zbHbSsCUua";
+  if (DISCORD_INVITE) {
+    $('discord').href = DISCORD_INVITE;
+    $('discord').style.display = 'inline-flex';
+  }
+
   async function poll() {
     try {
       const s = await (await fetch('/api/status', { cache: 'no-store' })).json();
       $('dot').className = 'dot ' + (s.online ? 'on' : 'off');
       $('state').textContent = s.online ? 'ONLINE' : 'OFFLINE';
+      $('stateAr').textContent = s.online ? 'السيرفر شغّال' : 'السيرفر مطفي';
       $('players').textContent = s.online ? s.players : '–';
       $('max').textContent = '/' + s.maxPlayers;
       $('mode').textContent = s.online ? (s.gametype || '—') : 'starting back up…';
