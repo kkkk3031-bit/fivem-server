@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# fivem — control CLI for the local FiveM (GTA V) server
+# Server lives in ~/fivem: server/ (FXServer build), server-data/ (resources + server.cfg)
+# The server runs inside tmux session "fivem" under a supervisor loop that
+# auto-restarts it if it crashes. Autostart on boot via cron @reboot.
+set -u
+
+BASE="$HOME/fivem"
+DATA="$BASE/server-data"
+RUN="$BASE/server/run.sh"
+KEYFILE="$BASE/license.key"
+LOG="$BASE/fxserver.log"
+SESSION="fivem"
+
+need_key() {
+  if [ ! -s "$KEYFILE" ]; then
+    echo "No license key yet."
+    echo "1. Get a free key at https://portal.cfx.re/servers/registration-keys"
+    echo "   (log in with your Cfx.re/FiveM account, click 'Generate key')"
+    echo "2. Save it here with:  fivem key cfxk_xxxxxxxxxxxx_xxxxx"
+    return 1
+  fi
+}
+
+running() { tmux has-session -t "$SESSION" 2>/dev/null; }
+
+case "${1:-help}" in
+  key)
+    [ -n "${2:-}" ] || { echo "usage: fivem key <license-key>"; exit 1; }
+    printf '%s\n' "$2" > "$KEYFILE"
+    chmod 600 "$KEYFILE"
+    echo "License key saved. Run: fivem start"
+    ;;
+  start)
+    need_key || exit 1
+    if running; then echo "Already running. Use: fivem status"; exit 0; fi
+    tmux new-session -d -s "$SESSION" \
+      "cd '$DATA' && while true; do \
+         '$RUN' +exec server.cfg +set sv_licenseKey \"\$(cat '$KEYFILE')\" 2>&1 | tee -a '$LOG'; \
+         echo '[supervisor] server exited, restarting in 5s (Ctrl-C twice in console to stop loop)'; \
+         sleep 5; \
+       done"
+    echo "Started in tmux session '$SESSION' (supervisor auto-restarts on crash)."
+    echo "Console: fivem console   Log: fivem log   Status: fivem status"
+    ;;
+  stop)
+    if ! running; then echo "Not running."; exit 0; fi
+    tmux kill-session -t "$SESSION"
+    pkill -f 'FXServer' 2>/dev/null
+    echo "Stopped."
+    ;;
+  restart)
+    "$0" stop; sleep 2; "$0" start
+    ;;
+  status)
+    if running && pgrep -f FXServer >/dev/null; then
+      echo "RUNNING (tmux session '$SESSION', pid $(pgrep -f FXServer | head -1))"
+      ss -lun 2>/dev/null | grep -q ':30120' && echo "UDP 30120: listening" || echo "UDP 30120: NOT listening yet"
+      echo "Local connect (in FiveM F8 console): connect 127.0.0.1:30120"
+      echo "LAN connect: connect $(hostname -I 2>/dev/null | awk '{print $1}'):30120"
+    elif running; then
+      echo "Supervisor up but server process not running (probably restarting — check: fivem log)"
+    else
+      echo "STOPPED"
+    fi
+    ;;
+  console)
+    running || { echo "Not running."; exit 1; }
+    echo "(Detach with Ctrl-b then d — do NOT Ctrl-C unless you want to stop the server)"
+    tmux attach -t "$SESSION"
+    ;;
+  cmd)
+    shift
+    running || { echo "Not running."; exit 1; }
+    tmux send-keys -t "$SESSION" "$*" Enter
+    echo "Sent: $*"
+    ;;
+  log)
+    tail -n "${2:-40}" "$LOG"
+    ;;
+  *)
+    cat <<'EOF'
+fivem — FiveM (GTA V) server control
+
+  fivem key <key>    save your Cfx.re license key (portal.cfx.re)
+  fivem start        start server (tmux + auto-restart supervisor)
+  fivem stop         stop server
+  fivem restart      restart server
+  fivem status       running state + connect addresses
+  fivem console      attach to live server console (Ctrl-b d to detach)
+  fivem cmd <text>   send a console command (e.g. fivem cmd status)
+  fivem log [n]      show last n log lines (default 40)
+EOF
+    ;;
+esac

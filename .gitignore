@@ -1,0 +1,11 @@
+# FXServer binaries — re-downloaded by setup.sh (too big for git)
+server/
+# secret — never commit
+license.key
+# stock cfx-server-data resources — re-cloned by setup.sh (166MB)
+server-data/resources/
+# runtime junk
+*.log
+server-data/cache/
+server-data/db/
+server-data/.replxx_history
