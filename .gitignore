@@ -2,8 +2,12 @@
 server/
 # secret — never commit
 license.key
-# stock cfx-server-data resources — re-cloned by setup.sh (166MB)
-server-data/resources/
+# stock cfx-server-data resources — re-cloned by setup.sh (166MB);
+# keep only our custom kw-* resources in [local] (vMenu/pma-voice/bob74_ipl re-downloaded by setup.sh)
+server-data/resources/*
+!server-data/resources/\[local\]
+server-data/resources/\[local\]/*
+!server-data/resources/\[local\]/kw-*
 # runtime junk
 *.log
 server-data/cache/

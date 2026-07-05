@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; overflow: hidden; background: transparent; }
+  #speedo {
+    position: fixed; right: 3vw; bottom: 4vh;
+    display: none;
+    align-items: baseline; gap: 8px;
+    background: rgba(11,14,20,.72);
+    border: 1px solid rgba(35,44,61,.9);
+    border-radius: 14px;
+    padding: 10px 18px 12px;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    box-shadow: 0 8px 28px rgba(0,0,0,.45);
+  }
+  #num {
+    font-size: 44px; font-weight: 800; letter-spacing: .02em;
+    color: #FFB021; min-width: 78px; text-align: right;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 18px rgba(255,176,33,.4);
+  }
+  #unit { font-size: 13px; font-weight: 600; color: #8A94A6; letter-spacing: .18em; }
+</style>
+</head>
+<body>
+  <div id="speedo"><span id="num">0</span><span id="unit">KM/H</span></div>
+<script>
+  const el = document.getElementById('speedo');
+  const num = document.getElementById('num');
+  window.addEventListener('message', (e) => {
+    if (e.data.show === false) { el.style.display = 'none'; return; }
+    el.style.display = 'flex';
+    num.textContent = e.data.speed;
+    num.style.color = e.data.speed >= 200 ? '#FF5C5C' : '#FFB021';
+  });
+</script>
+</body>
+</html>

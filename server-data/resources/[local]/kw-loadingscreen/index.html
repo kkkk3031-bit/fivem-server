@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: #0B0E14;
+    background-image:
+      radial-gradient(ellipse 90% 55% at 50% -12%, rgba(255,176,33,.12), transparent),
+      radial-gradient(ellipse 60% 40% at 50% 115%, rgba(255,176,33,.06), transparent);
+    color: #ECF0F6;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 34px;
+  }
+  .ring {
+    width: 170px; height: 170px; border-radius: 50%;
+    border: 3px solid #FFB021;
+    box-shadow: 0 0 0 10px #0F131C, 0 0 0 11px #232C3D, 0 0 60px rgba(255,176,33,.35);
+    background: radial-gradient(circle at 50% 36%, #1D2432, #0F131C 72%);
+    display: flex; align-items: center; justify-content: center;
+    animation: pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 10px #0F131C, 0 0 0 11px #232C3D, 0 0 90px rgba(255,176,33,.55); } }
+  .ring svg { width: 64px; height: 64px; }
+  h1 {
+    font-size: 54px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
+    text-align: center; line-height: 1.05;
+  }
+  h1 span { color: #FFB021; }
+  .flag {
+    width: 150px; height: 5px; border-radius: 3px; margin: 14px auto 0;
+    background: linear-gradient(90deg, #0a0a0a 0 22%, #007A3D 22% 48%, #fff 48% 74%, #CE1126 74% 100%);
+  }
+  .bar-wrap { width: min(460px, 70vw); }
+  .bar-bg {
+    height: 8px; border-radius: 4px; background: #161C28; border: 1px solid #232C3D; overflow: hidden;
+  }
+  .bar {
+    height: 100%; width: 0%; border-radius: 4px;
+    background: linear-gradient(90deg, #FFB021, #FFC95E);
+    box-shadow: 0 0 14px rgba(255,176,33,.7);
+    transition: width .3s ease;
+  }
+  .bar-label { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #8A94A6; letter-spacing: .1em; }
+  .tip { min-height: 44px; text-align: center; color: #8A94A6; font-size: 15px; line-height: 1.6; }
+  .tip b { color: #FFB021; }
+  .tip [lang="ar"] { display: block; font-size: 14px; }
+</style>
+</head>
+<body>
+  <div class="ring">
+    <svg viewBox="0 0 40 40" fill="none" stroke="#FFB021" stroke-width="3" stroke-linecap="round">
+      <path d="M 12 10 A 13 13 0 1 0 28 10"/><line x1="20" y1="4" x2="20" y2="18"/>
+    </svg>
+  </div>
+  <div>
+    <h1>Khaled's <span>FiveM</span></h1>
+    <div class="flag"></div>
+  </div>
+  <div class="bar-wrap">
+    <div class="bar-bg"><div class="bar" id="bar"></div></div>
+    <div class="bar-label"><span>LOADING · <bdi lang="ar">جاري التحميل</bdi></span><span id="pct">0%</span></div>
+  </div>
+  <div class="tip" id="tip"></div>
+
+<script>
+  const tips = [
+    'Press <b>M</b> to open the menu — spawn any car, weapon, or teleport<span lang="ar">اضغط <b>M</b> لفتح القائمة — عربيات وأسلحة وتنقّل</span>',
+    'Press <b>N</b> to talk — friends near you will hear your voice<span lang="ar">اضغط <b>N</b> للتكلم — اللي قريب منك يسمعك</span>',
+    'Nightclubs, the casino and many interiors are open — go explore<span lang="ar">النوادي والكازينو والأماكن الداخلية مفتوحة — استكشف</span>',
+    'Join our Discord from the connect page<span lang="ar">انضم لديسكوردنا من صفحة الاتصال</span>',
+    'Private server for the boys — Kuwait 🇰🇼<span lang="ar">سيرفر خاص للربع — الكويت</span>',
+  ];
+  let i = 0;
+  const tipEl = document.getElementById('tip');
+  function nextTip() { tipEl.innerHTML = tips[i % tips.length]; i++; }
+  nextTip(); setInterval(nextTip, 5000);
+
+  let count = 0, thisCount = 0;
+  window.addEventListener('message', (e) => {
+    if (e.data.eventName === 'loadProgress') {
+      const f = Math.min(1, e.data.loadFraction || 0);
+      document.getElementById('bar').style.width = (f * 100).toFixed(1) + '%';
+      document.getElementById('pct').textContent = Math.round(f * 100) + '%';
+    }
+  });
+</script>
+</body>
+</html>
