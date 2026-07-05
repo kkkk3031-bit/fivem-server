@@ -13,3 +13,7 @@ server-data/resources/\[local\]/*
 server-data/cache/
 server-data/db/
 server-data/.replxx_history
+
+# local backups — never commit
+backups/
+backup.log

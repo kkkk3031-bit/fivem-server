@@ -11,6 +11,10 @@ RUN="$BASE/server/run.sh"
 KEYFILE="$BASE/license.key"
 LOG="$BASE/fxserver.log"
 SESSION="fivem"
+PUBLIC_IP="72.60.89.132"
+PORT=30120
+BACKUP_DIR="$BASE/backups"
+CONNECT_PAGE="https://fivem-connect-production.up.railway.app"
 
 need_key() {
   if [ ! -s "$KEYFILE" ]; then
@@ -23,6 +27,8 @@ need_key() {
 }
 
 running() { tmux has-session -t "$SESSION" 2>/dev/null; }
+
+api() { curl -s -m 5 "http://127.0.0.1:$PORT/$1"; }
 
 case "${1:-help}" in
   key)
@@ -55,14 +61,71 @@ case "${1:-help}" in
   status)
     if running && pgrep -f FXServer >/dev/null; then
       echo "RUNNING (tmux session '$SESSION', pid $(pgrep -f FXServer | head -1))"
-      ss -lun 2>/dev/null | grep -q ':30120' && echo "UDP 30120: listening" || echo "UDP 30120: NOT listening yet"
-      echo "Local connect (in FiveM F8 console): connect 127.0.0.1:30120"
-      echo "LAN connect: connect $(hostname -I 2>/dev/null | awk '{print $1}'):30120"
+      ss -lun 2>/dev/null | grep -q ":$PORT" && echo "UDP $PORT: listening" || echo "UDP $PORT: NOT listening yet"
+      echo "Public connect: connect $PUBLIC_IP:$PORT"
+      echo "Connect page:   $CONNECT_PAGE"
     elif running; then
       echo "Supervisor up but server process not running (probably restarting — check: fivem log)"
     else
       echo "STOPPED"
     fi
+    ;;
+  players)
+    P="$(api players.json)"
+    [ -n "$P" ] || { echo "Server not responding on :$PORT."; exit 1; }
+    N=$(printf '%s' "$P" | grep -o '"name"' | wc -l)
+    D="$(api dynamic.json)"
+    MAX=$(printf '%s' "$D" | sed -n 's/.*"sv_maxclients":"\{0,1\}\([0-9]*\)"\{0,1\}.*/\1/p')
+    echo "Players online: $N / ${MAX:-16}"
+    printf '%s' "$P" | tr '{' '\n' | sed -n 's/.*"name":"\([^"]*\)".*"ping":\([0-9]*\).*/  \1 (\2 ms)/p'
+    ;;
+  address)
+    echo "Game (F8 console):  connect $PUBLIC_IP:$PORT"
+    echo "One-click link:     fivem://connect/$PUBLIC_IP:$PORT"
+    echo "Connect page:       $CONNECT_PAGE"
+    ;;
+  doctor)
+    echo "== fivem doctor — $(date '+%F %T') =="
+    FAIL=0
+    if running && pgrep -f FXServer >/dev/null; then echo "[OK]   FXServer process running"; else echo "[FAIL] FXServer not running (fix: fivem start)"; FAIL=1; fi
+    if ss -lun 2>/dev/null | grep -q ":$PORT"; then echo "[OK]   UDP $PORT listening"; else echo "[FAIL] UDP $PORT not listening"; FAIL=1; fi
+    if [ -n "$(api info.json)" ]; then echo "[OK]   HTTP info.json responding"; else echo "[FAIL] info.json not responding"; FAIL=1; fi
+    N=$(api players.json | grep -o '"name"' | wc -l); echo "[INFO] Players online: $N"
+    DISK=$(df -h "$BASE" | awk 'NR==2{print $5" used ("$4" free)"}'); echo "[INFO] Disk: $DISK"
+    MEM=$(ps -o rss= -p "$(pgrep -f FXServer | head -1)" 2>/dev/null | awk '{printf "%.0f MB", $1/1024}'); [ -n "$MEM" ] && echo "[INFO] FXServer RAM: $MEM"
+    R=$(grep -c '\[supervisor\] server exited' "$LOG" 2>/dev/null || echo 0); echo "[INFO] Crash-restarts since log start: $R"
+    echo "-- last 500 log lines: problems --"
+    PROBS=$(tail -n 500 "$LOG" 2>/dev/null | grep -Ei 'error|exception|failed|could not|unable to' | grep -viE 'no such export' | tail -n 10)
+    if [ -n "$PROBS" ]; then printf '%s\n' "$PROBS" | sed 's/^/  /'; else echo "  (none — log clean)"; fi
+    if [ "$FAIL" = 0 ]; then echo "== VERDICT: HEALTHY =="; else echo "== VERDICT: PROBLEMS FOUND (see FAIL lines) =="; fi
+    ;;
+  backup)
+    KEEP="${2:-7}"
+    mkdir -p "$BACKUP_DIR"
+    STAMP=$(date +%Y%m%d-%H%M%S)
+    OUT="$BACKUP_DIR/server-data-$STAMP.tar.gz"
+    tar -czf "$OUT" -C "$BASE" --exclude='server-data/cache' server-data 2>/dev/null
+    echo "Backup: $OUT ($(du -h "$OUT" | cut -f1))"
+    ls -1t "$BACKUP_DIR"/server-data-*.tar.gz 2>/dev/null | tail -n +$((KEEP+1)) | xargs -r rm -f
+    echo "Keeping newest $KEEP backups ($(ls -1 "$BACKUP_DIR" | wc -l) present)."
+    ;;
+  update)
+    echo "Checking latest FXServer Linux build…"
+    URL=$(curl -s -m 15 https://changelogs-live.fivem.net/api/changelog/versions/linux/server | sed -n 's/.*"latest_download":"\([^"]*\)".*/\1/p')
+    [ -n "$URL" ] || { echo "Could not fetch latest build URL."; exit 1; }
+    echo "Latest: $URL"
+    echo "This stops the server, replaces ~/fivem/server, restarts. Continue? (y/N)"
+    read -r A; [ "$A" = "y" ] || { echo "Aborted."; exit 0; }
+    "$0" backup
+    TMP=$(mktemp -d)
+    curl -L -o "$TMP/fx.tar.xz" "$URL" || { echo "Download failed."; exit 1; }
+    "$0" stop
+    mv "$BASE/server" "$BASE/server.old.$(date +%s)"
+    mkdir -p "$BASE/server"
+    tar -xJf "$TMP/fx.tar.xz" -C "$BASE/server" || { echo "Extract failed — restoring old build."; rm -rf "$BASE/server"; mv "$BASE"/server.old.* "$BASE/server"; exit 1; }
+    rm -rf "$TMP"
+    "$0" start
+    echo "Updated. Old build kept at ~/fivem/server.old.* (delete when happy)."
     ;;
   console)
     running || { echo "Not running."; exit 1; }
@@ -87,6 +150,11 @@ fivem — FiveM (GTA V) server control
   fivem stop         stop server
   fivem restart      restart server
   fivem status       running state + connect addresses
+  fivem players      who's online right now (name + ping)
+  fivem address      all ways to join (IP, fivem:// link, web page)
+  fivem doctor       full health check + log problem scan
+  fivem backup [n]   backup server-data to ~/fivem/backups (keep n, default 7)
+  fivem update       upgrade FXServer to latest build (asks first)
   fivem console      attach to live server console (Ctrl-b d to detach)
   fivem cmd <text>   send a console command (e.g. fivem cmd status)
   fivem log [n]      show last n log lines (default 40)

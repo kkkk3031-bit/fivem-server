@@ -174,7 +174,22 @@
   a.discord:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
   a.discord svg { flex: none; }
 
+  /* mods grid */
+  .mods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .mod { display: flex; gap: 9px; align-items: flex-start; font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  .mod .ico { font-size: 16px; flex: none; margin-top: 1px; }
+  .mod b { color: var(--text); font-weight: 600; font-size: 12px; }
+  .mod kbd {
+    font-family: var(--mono); font-size: 10.5px; color: var(--amber);
+    background: var(--bg); border: 1px solid var(--edge); border-radius: 4px; padding: 0 5px;
+  }
+  .who-chip {
+    font-family: var(--mono); font-size: 12px; color: var(--text);
+    background: var(--bg); border: 1px solid var(--edge); border-radius: 999px; padding: 4px 12px;
+  }
+  .who-chip small { color: var(--faint); }
   @media (max-width: 430px) {
+    .mods { grid-template-columns: 1fr; }
     .steps { flex-direction: column; }
     .step { display: flex; align-items: baseline; gap: 10px; text-align: left; }
   }
@@ -232,6 +247,25 @@
     <span>Join our Discord · <bdi lang="ar">انضم للديسكورد</bdi></span>
   </a>
 
+  <div class="card reveal" id="whoCard" style="display:none">
+    <div class="row" style="margin-bottom:8px"><span class="k">Online now · <bdi lang="ar">متصلين الحين</bdi></span></div>
+    <div id="who" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+  </div>
+
+  <div class="card reveal">
+    <div class="row" style="margin-bottom:10px"><span class="k">What's inside · <bdi lang="ar">وش فيه بالسيرفر</bdi></span></div>
+    <div class="mods">
+      <div class="mod"><span class="ico">🚗</span><div><b>vMenu — press <kbd>M</kbd></b><br>any car, teleport, weather, outfits<span lang="ar"> · كل شي من قائمة M</span></div></div>
+      <div class="mod"><span class="ico">🎤</span><div><b>Voice chat — hold <kbd>N</kbd></b><br>nearby players hear you<span lang="ar"> · كلّم اللي جنبك</span></div></div>
+      <div class="mod"><span class="ico">💃</span><div><b>170+ emotes — <kbd>F3</kbd> or /e</b><br>dances &amp; actions<span lang="ar"> · رقصات وحركات</span></div></div>
+      <div class="mod"><span class="ico">⛽</span><div><b>Real fuel</b><br>refill at any gas station<span lang="ar"> · عبّي بنزين من المحطة</span></div></div>
+      <div class="mod"><span class="ico">🙌</span><div><b><kbd>X</kbd> hands up · <kbd>Z</kbd> crouch · <kbd>B</kbd> point</b><br><span lang="ar">ارفع يدك · انحني · أشّر</span></div></div>
+      <div class="mod"><span class="ico">👕</span><div><b>Clothing — /hat /mask /shirt</b><br>toggle clothes on the go<span lang="ar"> · البس وشيل بالأوامر</span></div></div>
+      <div class="mod"><span class="ico">🗺️</span><div><b>Fun spots on the map</b><br>drift lots, casino, airfields<span lang="ar"> · أماكن حلوة عالخريطة</span></div></div>
+      <div class="mod"><span class="ico">🏠</span><div><b>40+ open interiors</b><br>apartments, clubs, offices<span lang="ar"> · شقق ونوادي مفتوحة</span></div></div>
+    </div>
+  </div>
+
   <div class="steps reveal">
     <div class="step"><div class="n">1</div><div class="t">Own GTA V &amp; install <a href="https://fivem.net" rel="noopener">FiveM</a><div class="t-ar" lang="ar">حمّل فايف إم (يحتاج قراند 5)</div></div></div>
     <div class="step"><div class="n">2</div><div class="t">Press CONNECT above<div class="t-ar" lang="ar">اضغط زر الاتصال فوق</div></div></div>
@@ -268,8 +302,21 @@
       $('state').textContent = 'CHECKING';
     }
   }
+  async function pollPlayers() {
+    try {
+      const list = await (await fetch('/api/players', { cache: 'no-store' })).json();
+      const card = $('whoCard');
+      if (!Array.isArray(list) || list.length === 0) { card.style.display = 'none'; return; }
+      $('who').innerHTML = list.map(p =>
+        `<span class="who-chip">${String(p.name).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))} <small>${p.ping}ms</small></span>`
+      ).join('');
+      card.style.display = 'block';
+    } catch {}
+  }
   poll();
+  pollPlayers();
   setInterval(poll, 10000);
+  setInterval(pollPlayers, 15000);
 
   $('copy').addEventListener('click', async () => {
     try {

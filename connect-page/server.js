@@ -51,6 +51,19 @@ http.createServer(async (req, res) => {
     res.end(JSON.stringify(r));
     return;
   }
+  if (req.url === '/api/players') {
+    let list = [];
+    try {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 5000);
+      const r = await fetch(`${FIVEM}/players.json`, { signal: ctl.signal });
+      clearTimeout(t);
+      if (r.ok) list = (await r.json()).map(p => ({ name: p.name, ping: p.ping }));
+    } catch {}
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify(list));
+    return;
+  }
   if (req.url === '/api/status') {
     const s = await status();
     res.writeHead(200, {

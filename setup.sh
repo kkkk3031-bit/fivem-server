@@ -41,6 +41,24 @@ if [ ! -d "$LOCAL/bob74_ipl" ]; then
   unzip -q -o /tmp/ipl.zip -d /tmp && mv /tmp/bob74_ipl-* "$LOCAL/bob74_ipl" && rm /tmp/ipl.zip
 fi
 
+echo "== 1e/4 mods pack (dpemotes, dpclothing, LegacyFuel, PolyZone, interact-sound) =="
+for spec in "andristum/dpemotes dpemotes" "andristum/dpclothing dpclothing" \
+            "InZidiuZ/LegacyFuel LegacyFuel" "mkafrin/PolyZone PolyZone" \
+            "plunkettscott/interact-sound interact-sound"; do
+  repo=${spec% *}; name=${spec#* }
+  if [ ! -d "$LOCAL/$name" ]; then
+    curl -sL "https://github.com/$repo/archive/refs/heads/master.zip" -o /tmp/mod.zip
+    unzip -q -o /tmp/mod.zip -d /tmp && mv /tmp/"$(basename "$repo")"-master "$LOCAL/$name" && rm /tmp/mod.zip
+  fi
+done
+# dpemotes: no MySQL on this box — keep SQL keybinding off
+sed -i 's/SqlKeybinding = true,/SqlKeybinding = false, -- no database on this server/' "$LOCAL/dpemotes/Config.lua" || true
+
+echo "== 1f/4 nightly backup cron (05:00, keep 7) =="
+(crontab -l 2>/dev/null | grep -v 'fivem-backup'
+ echo '0 5 * * * $HOME/.local/bin/fivem backup >> $HOME/fivem/backup.log 2>&1 # fivem-backup'
+) | crontab -
+
 echo "== 2/4 fivem CLI =="
 mkdir -p "$HOME/.local/bin"
 cp "$BASE/bin/fivem" "$HOME/.local/bin/fivem"
