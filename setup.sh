@@ -19,6 +19,15 @@ if [ ! -d "$BASE/server-data/resources" ]; then
   rm -rf /tmp/cfx-sd
 fi
 
+echo "== 1c/4 vMenu =="
+if [ ! -d "$BASE/server-data/resources/[local]/vMenu" ]; then
+  VURL=$(curl -s https://api.github.com/repos/TomGrobbe/vMenu/releases/latest | grep -oP '"browser_download_url":\s*"\K[^"]+\.zip')
+  mkdir -p "$BASE/server-data/resources/[local]/vMenu"
+  curl -sL "$VURL" -o /tmp/vmenu.zip
+  unzip -q -o /tmp/vmenu.zip -d "$BASE/server-data/resources/[local]/vMenu"
+  rm /tmp/vmenu.zip
+fi
+
 echo "== 2/4 fivem CLI =="
 mkdir -p "$HOME/.local/bin"
 cp "$BASE/bin/fivem" "$HOME/.local/bin/fivem"
