@@ -103,11 +103,19 @@
   .state-ar { font-size: 11.5px; font-weight: 500; color: var(--muted); margin-top: 1px; }
   .players { font-family: var(--display); font-weight: 900; font-size: 34px; letter-spacing: .02em; }
   .players small { color: var(--muted); font-size: 16px; font-weight: 700; }
-  .card-rows { border-top: 1px solid var(--edge); margin-top: 13px; padding-top: 11px;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 7px 18px; }
-  .row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
-  .row .k { color: var(--faint); font-weight: 500; }
-  .row .v { color: var(--muted); font-weight: 600; text-align: right; }
+  .card-rows { border-top: 1px solid var(--edge); margin-top: 13px; padding-top: 12px;
+    display: grid; grid-template-columns: repeat(4, 1fr); }
+  .row { display: grid; gap: 3px; text-align: center; padding: 2px 6px; }
+  .row + .row { border-left: 1px solid var(--edge); }
+  .row .k {
+    color: var(--faint); font-size: 9.5px; font-weight: 700;
+    letter-spacing: .16em; text-transform: uppercase;
+  }
+  .row .v { color: var(--text); font-weight: 600; font-size: 13px; }
+  @media (max-width: 380px) {
+    .card-rows { grid-template-columns: 1fr 1fr; gap: 10px 0; }
+    .row:nth-child(3) { border-left: none; }
+  }
 
   /* engine-start connect button */
   .startwrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
@@ -132,15 +140,56 @@
   .start .big { font-size: 34px; font-weight: 900; letter-spacing: .16em; }
   .start .small { font-family: var(--body); font-size: 10.5px; font-weight: 600; color: var(--muted); letter-spacing: .22em; margin-top: 5px; text-transform: uppercase; }
 
-  .addr { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13.5px; color: var(--faint); }
-  .addr code { color: var(--text); font-family: inherit; }
-  button.copy {
-    background: var(--panel); border: 1px solid var(--edge); border-radius: 8px;
-    color: var(--muted); font-family: var(--body); font-size: 12px; font-weight: 600;
-    padding: 6px 12px; cursor: pointer; transition: color .15s, border-color .15s;
+  /* address bar with built-in copy */
+  .addr {
+    display: flex; align-items: stretch;
+    background: var(--panel); border: 1px solid var(--edge); border-radius: 12px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.35);
   }
-  button.copy:hover { color: var(--text); border-color: var(--muted); }
-  button.copy:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  .addr code {
+    display: flex; align-items: center;
+    padding: 11px 16px;
+    font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--text);
+  }
+  button.copy {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(255,176,33,.1);
+    border: none; border-left: 1px solid var(--edge);
+    color: var(--amber); font-family: var(--body); font-size: 11.5px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+    padding: 0 16px; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  button.copy:hover { background: rgba(255,176,33,.22); }
+  button.copy:active { background: rgba(255,176,33,.32); }
+  button.copy:focus-visible { outline: 2px solid var(--amber); outline-offset: -2px; }
+  button.copy svg { flex: none; }
+
+  /* pro button row (Discord / WhatsApp / X) */
+  .btnrow { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: min(420px, 100%); }
+  a.btn {
+    flex: 1; min-width: 118px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    height: 46px; border-radius: 12px; padding: 0 18px;
+    font-family: var(--body); font-weight: 700; font-size: 13.5px; letter-spacing: .01em;
+    text-decoration: none; color: #fff;
+    border: 1px solid transparent;
+    transition: transform .12s ease, box-shadow .2s ease, filter .15s ease;
+  }
+  a.btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+  a.btn:active { transform: translateY(0); filter: brightness(.95); }
+  a.btn:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+  a.btn svg { flex: none; }
+  a.btn-discord { background: linear-gradient(180deg, #5F6CFF, #4E5BE4); box-shadow: 0 8px 24px rgba(88,101,242,.35); }
+  a.btn-discord:hover { box-shadow: 0 12px 32px rgba(88,101,242,.5); }
+  a.btn-wa { background: linear-gradient(180deg, #2BDF70, #1EBF5C); box-shadow: 0 8px 24px rgba(37,211,102,.3); }
+  a.btn-wa:hover { box-shadow: 0 12px 32px rgba(37,211,102,.45); }
+  a.btn-x {
+    background: var(--panel-2); border-color: var(--edge); color: var(--text);
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  a.btn-x:hover { border-color: var(--muted); box-shadow: 0 12px 32px rgba(0,0,0,.5); }
 
   /* how-to steps */
   .steps { display: flex; gap: 10px; width: min(420px, 100%); }
@@ -159,37 +208,12 @@
   .credit a { color: var(--amber); text-decoration: none; font-weight: 600; }
   .credit a:hover { text-decoration: underline; }
 
-  /* discord join button */
-  a.discord {
-    display: none; /* shown by JS when an invite link is set */
-    align-items: center; gap: 9px;
-    background: #5865F2; color: #fff;
-    border-radius: 12px; padding: 11px 22px;
-    font-family: var(--body); font-weight: 600; font-size: 14px;
-    text-decoration: none;
-    box-shadow: 0 8px 26px rgba(88,101,242,.35);
-    transition: transform .12s ease, box-shadow .2s ease;
-  }
-  a.discord:hover { transform: translateY(-1px); box-shadow: 0 10px 32px rgba(88,101,242,.5); }
-  a.discord:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-  a.discord svg { flex: none; }
-
-  /* mods grid */
-  .mods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .mod { display: flex; gap: 9px; align-items: flex-start; font-size: 11.5px; color: var(--muted); line-height: 1.45; }
-  .mod .ico { font-size: 16px; flex: none; margin-top: 1px; }
-  .mod b { color: var(--text); font-weight: 600; font-size: 12px; }
-  .mod kbd {
-    font-family: var(--mono); font-size: 10.5px; color: var(--amber);
-    background: var(--bg); border: 1px solid var(--edge); border-radius: 4px; padding: 0 5px;
-  }
   .who-chip {
     font-family: var(--mono); font-size: 12px; color: var(--text);
     background: var(--bg); border: 1px solid var(--edge); border-radius: 999px; padding: 4px 12px;
   }
   .who-chip small { color: var(--faint); }
   @media (max-width: 430px) {
-    .mods { grid-template-columns: 1fr; }
     .steps { flex-direction: column; }
     .step { display: flex; align-items: baseline; gap: 10px; text-align: left; }
   }
@@ -202,10 +226,10 @@
 </head>
 <body>
   <header class="reveal">
-    <div class="eyebrow">Private Server · Kuwait · <bdi lang="ar">سيرفر خاص</bdi></div>
+    <div class="eyebrow">Private Server · Kuwait</div>
     <h1>Khaled's <span class="accent">FiveM</span></h1>
     <div class="flag" aria-hidden="true"></div>
-    <div class="sub">GTA V multiplayer · online 24/7 · <bdi lang="ar">قراند مع الربع · شغّال ٢٤ ساعة</bdi></div>
+    <div class="sub">GTA V multiplayer · online 24/7 · <bdi lang="ar">شغّال ٢٤ ساعة</bdi></div>
   </header>
 
   <div class="card reveal" role="status" aria-live="polite">
@@ -220,10 +244,10 @@
       <div class="players"><span id="players">–</span><small id="max">/16</small></div>
     </div>
     <div class="card-rows">
-      <div class="row"><span class="k">Mode · <bdi lang="ar">الوضع</bdi></span><span class="v" id="mode">—</span></div>
-      <div class="row"><span class="k">Map · <bdi lang="ar">الخريطة</bdi></span><span class="v" id="map">—</span></div>
-      <div class="row"><span class="k">Region · <bdi lang="ar">المنطقة</bdi></span><span class="v"><bdi lang="ar">الكويت</bdi> 🇰🇼</span></div>
-      <div class="row"><span class="k">Uptime · <bdi lang="ar">التشغيل</bdi></span><span class="v">24/7</span></div>
+      <div class="row"><span class="k">Mode</span><span class="v" id="mode">—</span></div>
+      <div class="row"><span class="k">Map</span><span class="v" id="map">—</span></div>
+      <div class="row"><span class="k">Region</span><span class="v">Kuwait 🇰🇼</span></div>
+      <div class="row"><span class="k">Uptime</span><span class="v">24/7</span></div>
     </div>
   </div>
 
@@ -238,32 +262,31 @@
     </a>
     <div class="addr">
       <code>connect 72.60.89.132:30120</code>
-      <button class="copy" id="copy" type="button">copy</button>
+      <button class="copy" id="copy" type="button" aria-label="Copy connect command">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        <span id="copyTxt">copy</span>
+      </button>
     </div>
   </div>
 
-  <a class="discord reveal" id="discord" href="#" rel="noopener" target="_blank">
-    <svg width="22" height="17" viewBox="0 0 71 55" fill="currentColor" aria-hidden="true"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.4.4l-1.8 3.7a54 54 0 0 0-16.2 0L25.5.4a58.4 58.4 0 0 0-14.7 4.6C1.6 18.7-.9 32.2.3 45.4a58.9 58.9 0 0 0 18 9.1l3.8-6.2a38 38 0 0 1-6-2.9l1.5-1.1a41.9 41.9 0 0 0 36 0l1.5 1.1a38 38 0 0 1-6 2.9l3.8 6.2a58.7 58.7 0 0 0 18-9.1c1.5-15.3-2.4-28.6-10.8-40.5ZM23.7 37.3c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.4 7.2s-2.9 7.2-6.4 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.4 7.2s-2.8 7.2-6.4 7.2Z"/></svg>
-    <span>Join our Discord · <bdi lang="ar">انضم للديسكورد</bdi></span>
-  </a>
+  <div class="btnrow reveal">
+    <a class="btn btn-discord" href="https://discord.gg/zbHbSsCUua" rel="noopener" target="_blank" aria-label="Join our Discord">
+      <svg width="20" height="16" viewBox="0 0 71 55" fill="currentColor" aria-hidden="true"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.4.4l-1.8 3.7a54 54 0 0 0-16.2 0L25.5.4a58.4 58.4 0 0 0-14.7 4.6C1.6 18.7-.9 32.2.3 45.4a58.9 58.9 0 0 0 18 9.1l3.8-6.2a38 38 0 0 1-6-2.9l1.5-1.1a41.9 41.9 0 0 0 36 0l1.5 1.1a38 38 0 0 1-6 2.9l3.8 6.2a58.7 58.7 0 0 0 18-9.1c1.5-15.3-2.4-28.6-10.8-40.5ZM23.7 37.3c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.4 7.2s-2.9 7.2-6.4 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.4 7.2s-2.8 7.2-6.4 7.2Z"/></svg>
+      <span>Discord</span>
+    </a>
+    <a class="btn btn-wa" href="https://wa.me/96555828769" rel="noopener" target="_blank" aria-label="Message on WhatsApp">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.6.8-.8 1-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.4-3c-.3-.4 0-.5.2-.7l.4-.5c.1-.2.2-.3.3-.5v-.5C10.3 9.1 9.8 7.8 9.6 7.3c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.9 2.9 4.6 4 .6.3 1.1.5 1.5.6.6.2 1.2.2 1.7.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2l-.2-.3Z"/></svg>
+      <span>WhatsApp</span>
+    </a>
+    <a class="btn btn-x" href="https://x.com/KhaledQ84Ever" rel="noopener" target="_blank" aria-label="Follow on X">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-4.9-6.4L6.4 22H3.3l7.3-8.3L1.2 2h6.4l4.4 5.9L18.9 2Zm-1.1 18h1.7L7.1 3.7H5.2L17.8 20Z"/></svg>
+      <span>@KhaledQ84Ever</span>
+    </a>
+  </div>
 
   <div class="card reveal" id="whoCard" style="display:none">
     <div class="row" style="margin-bottom:8px"><span class="k">Online now · <bdi lang="ar">متصلين الحين</bdi></span></div>
     <div id="who" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-  </div>
-
-  <div class="card reveal">
-    <div class="row" style="margin-bottom:10px"><span class="k">What's inside · <bdi lang="ar">وش فيه بالسيرفر</bdi></span></div>
-    <div class="mods">
-      <div class="mod"><span class="ico">🚗</span><div><b>vMenu — press <kbd>M</kbd></b><br>any car, teleport, weather, outfits<span lang="ar"> · كل شي من قائمة M</span></div></div>
-      <div class="mod"><span class="ico">🎤</span><div><b>Voice chat — hold <kbd>N</kbd></b><br>nearby players hear you<span lang="ar"> · كلّم اللي جنبك</span></div></div>
-      <div class="mod"><span class="ico">💃</span><div><b>170+ emotes — <kbd>F3</kbd> or /e</b><br>dances &amp; actions<span lang="ar"> · رقصات وحركات</span></div></div>
-      <div class="mod"><span class="ico">⛽</span><div><b>Real fuel</b><br>refill at any gas station<span lang="ar"> · عبّي بنزين من المحطة</span></div></div>
-      <div class="mod"><span class="ico">🙌</span><div><b><kbd>X</kbd> hands up · <kbd>Z</kbd> crouch · <kbd>B</kbd> point</b><br><span lang="ar">ارفع يدك · انحني · أشّر</span></div></div>
-      <div class="mod"><span class="ico">👕</span><div><b>Clothing — /hat /mask /shirt</b><br>toggle clothes on the go<span lang="ar"> · البس وشيل بالأوامر</span></div></div>
-      <div class="mod"><span class="ico">🗺️</span><div><b>Fun spots on the map</b><br>drift lots, casino, airfields<span lang="ar"> · أماكن حلوة عالخريطة</span></div></div>
-      <div class="mod"><span class="ico">🏠</span><div><b>40+ open interiors</b><br>apartments, clubs, offices<span lang="ar"> · شقق ونوادي مفتوحة</span></div></div>
-    </div>
   </div>
 
   <div class="steps reveal">
@@ -280,13 +303,6 @@
 <script>
   const $ = id => document.getElementById(id);
 
-  // paste the Discord invite link here to show the Discord button
-  const DISCORD_INVITE = "https://discord.gg/zbHbSsCUua";
-  if (DISCORD_INVITE) {
-    $('discord').href = DISCORD_INVITE;
-    $('discord').style.display = 'inline-flex';
-  }
-
   async function poll() {
     try {
       const s = await (await fetch('/api/status', { cache: 'no-store' })).json();
@@ -295,8 +311,9 @@
       $('stateAr').textContent = s.online ? 'السيرفر شغّال' : 'السيرفر مطفي';
       $('players').textContent = s.online ? s.players : '–';
       $('max').textContent = '/' + s.maxPlayers;
-      $('mode').textContent = s.online ? (s.gametype || '—') : 'starting back up…';
-      $('map').textContent = s.online ? (s.map || '—') : '—';
+      $('mode').textContent = s.online ? (s.gametype || '—') : 'restarting…';
+      const m = (s.map || '').replace(/^fivem-map-/, '');
+      $('map').textContent = s.online && m ? m.charAt(0).toUpperCase() + m.slice(1) : '—';
     } catch {
       $('dot').className = 'dot';
       $('state').textContent = 'CHECKING';
@@ -321,9 +338,9 @@
   $('copy').addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText('connect 72.60.89.132:30120');
-      $('copy').textContent = 'copied!';
-    } catch { $('copy').textContent = 'select & copy'; }
-    setTimeout(() => $('copy').textContent = 'copy', 1600);
+      $('copyTxt').textContent = 'copied!';
+    } catch { $('copyTxt').textContent = 'select & copy'; }
+    setTimeout(() => $('copyTxt').textContent = 'copy', 1600);
   });
 </script>
 </body>
