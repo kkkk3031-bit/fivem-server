@@ -275,18 +275,12 @@
     <div class="step"><div class="n">3</div><div class="t">Spawn in &amp; drive<div class="t-ar" lang="ar">ادخل والعب مع الربع</div></div></div>
   </div>
 
-  <div class="card reveal" style="padding:14px 18px">
-  <div class="card-rows">
-    <div class="row"><span class="k">Mode</span><span class="v" id="mode">—</span></div>
-    <div class="row"><span class="k">Map</span><span class="v" id="map">—</span></div>
-    <div class="row"><span class="k">Region</span><span class="v">Kuwait 🇰🇼</span></div>
-    <div class="row"><span class="k">Uptime</span><span class="v">24/7</span></div>
-  </div>
-  </div>
-
   <footer class="reveal">
     <div class="credit">Program by <a href="https://x.com/KhaledQ84Ever" rel="noopener" target="_blank">𝕏 @KhaledQ84Ever</a> · <bdi lang="ar">برمجة خالد</bdi></div>
-    <div style="color: var(--amber); font-weight: 700; font-size: 12px; text-shadow: 0 0 14px rgba(255,176,33,.5), 0 1px 2px rgba(0,0,0,.6)">If the button does nothing: FiveM → F8 → paste the command · <bdi lang="ar">إذا الزر ما اشتغل: افتح فايف إم → اضغط F8 → الصق الأمر</bdi></div>
+    <div style="color: var(--amber); font-weight: 700; font-size: 12.5px; line-height: 1.9; text-shadow: 0 0 14px rgba(255,176,33,.5), 0 1px 2px rgba(0,0,0,.6)">
+      <div style="white-space: nowrap">Button not working? Open FiveM → press F8 → paste the command</div>
+      <div style="white-space: nowrap"><bdi lang="ar">الزر ما اشتغل؟ افتح فايف إم → اضغط F8 → الصق الأمر</bdi></div>
+    </div>
     <div style="margin-top:10px">
   <div class="btnrow reveal">
     <a class="btn btn-discord" href="https://discord.gg/zbHbSsCUua" rel="noopener" target="_blank" aria-label="Join our Discord">
@@ -316,9 +310,6 @@
       $('stateAr').textContent = s.online ? 'السيرفر شغّال' : 'السيرفر مطفي';
       $('players').textContent = s.online ? s.players : '–';
       $('max').textContent = '/' + s.maxPlayers;
-      $('mode').textContent = s.online ? (s.gametype || '—') : 'restarting…';
-      const m = (s.map || '').replace(/^fivem-map-/, '');
-      $('map').textContent = s.online && m ? m.charAt(0).toUpperCase() + m.slice(1) : '—';
     } catch {
       $('dot').className = 'dot';
       $('state').textContent = 'CHECKING';
