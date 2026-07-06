@@ -17,3 +17,8 @@ server-data/.replxx_history
 # local backups — never commit
 backups/
 backup.log
+
+# extra servers (fivem new <name>) — heavy dirs never committed
+instances/*/server-data/cache/
+instances/*/fxserver.log
+instances/*/license.key

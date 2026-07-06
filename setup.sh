@@ -68,7 +68,7 @@ chmod +x "$HOME/.local/bin/fivem"
 echo "== 3/4 crons (reboot autostart + 5-min watchdog) =="
 (crontab -l 2>/dev/null | grep -vE 'fivem start|fivem-watchdog'
  echo '@reboot sleep 20 && [ -s "$HOME/fivem/license.key" ] && $HOME/.local/bin/fivem start'
- echo '*/5 * * * * echo "tick $(date)" >> $HOME/fivem/watchdog.log; [ -s "$HOME/fivem/license.key" ] && $HOME/.local/bin/fivem start >> $HOME/fivem/watchdog.log 2>&1 # fivem-watchdog'
+ echo '*/5 * * * * echo "tick $(date)" >> $HOME/fivem/watchdog.log; [ -s "$HOME/fivem/license.key" ] && $HOME/.local/bin/fivem startall >> $HOME/fivem/watchdog.log 2>&1 # fivem-watchdog'
 ) | crontab -
 
 echo "== 4/4 done =="

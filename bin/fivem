@@ -1,27 +1,39 @@
 #!/usr/bin/env bash
-# fivem — control CLI for the local FiveM (GTA V) server
-# Server lives in ~/fivem: server/ (FXServer build), server-data/ (resources + server.cfg)
-# The server runs inside tmux session "fivem" under a supervisor loop that
-# auto-restarts it if it crashes. Autostart on boot via cron @reboot.
+# fivem — control CLI for local FiveM (GTA V) servers, multi-instance.
+# Main server: ~/fivem/server-data (port 30120, tmux "fivem").
+# Extra servers: ~/fivem/instances/<name>/ (own port/key/log, tmux "fivem-<name>").
+# Each server runs under a while-true supervisor loop (auto-restart on crash).
 set -u
 
 BASE="$HOME/fivem"
-DATA="$BASE/server-data"
 RUN="$BASE/server/run.sh"
-KEYFILE="$BASE/license.key"
-LOG="$BASE/fxserver.log"
-SESSION="fivem"
-PUBLIC_IP="72.60.89.132"
-PORT=30120
+INST="$BASE/instances"
 BACKUP_DIR="$BASE/backups"
+PUBLIC_IP="72.60.89.132"
 CONNECT_PAGE="https://fivem-connect-production.up.railway.app"
+
+# resolve instance: sets NAME DATA KEYFILE LOG SESSION PORT
+resolve() {
+  NAME="${1:-main}"
+  if [ "$NAME" = "main" ]; then
+    DATA="$BASE/server-data"; KEYFILE="$BASE/license.key"
+    LOG="$BASE/fxserver.log"; SESSION="fivem"
+  else
+    [ -d "$INST/$NAME" ] || { echo "No server named '$NAME'. See: fivem list"; exit 1; }
+    DATA="$INST/$NAME/server-data"; KEYFILE="$INST/$NAME/license.key"
+    LOG="$INST/$NAME/fxserver.log"; SESSION="fivem-$NAME"
+  fi
+  PORT=$(sed -n 's/.*endpoint_add_tcp "0\.0\.0\.0:\([0-9]*\)".*/\1/p' "$DATA/server.cfg" 2>/dev/null | head -1)
+  PORT="${PORT:-30120}"
+}
+
+all_names() { echo main; [ -d "$INST" ] && ls -1 "$INST" 2>/dev/null; }
 
 need_key() {
   if [ ! -s "$KEYFILE" ]; then
-    echo "No license key yet."
-    echo "1. Get a free key at https://portal.cfx.re/servers/registration-keys"
-    echo "   (log in with your Cfx.re/FiveM account, click 'Generate key')"
-    echo "2. Save it here with:  fivem key cfxk_xxxxxxxxxxxx_xxxxx"
+    echo "[$NAME] No license key yet. Each server needs its OWN free key:"
+    echo "  1. https://portal.cfx.re/servers/registration-keys → Generate key"
+    echo "  2. fivem key cfxk_xxxx $NAME"
     return 1
   fi
 }
@@ -30,82 +42,139 @@ running() { tmux has-session -t "$SESSION" 2>/dev/null; }
 
 api() { curl -s -m 5 "http://127.0.0.1:$PORT/$1"; }
 
-case "${1:-help}" in
+next_port() {
+  local p=30130
+  while grep -rqs "0\.0\.0\.0:$p" "$INST"/*/server-data/server.cfg 2>/dev/null || [ "$p" = "$(resolve main >/dev/null 2>&1; echo $PORT)" ]; do p=$((p+10)); done
+  echo $p
+}
+
+CMD="${1:-help}"
+
+case "$CMD" in
+  new)
+    N="${2:-}"; [ -n "$N" ] || { echo "usage: fivem new <name> [port]"; exit 1; }
+    [[ "$N" =~ ^[a-z0-9-]+$ ]] || { echo "Name must be lowercase letters/numbers/dashes."; exit 1; }
+    [ "$N" != "main" ] && [ ! -e "$INST/$N" ] || { echo "'$N' already exists."; exit 1; }
+    P="${3:-$(next_port)}"
+    mkdir -p "$INST/$N/server-data/resources"
+    # share resources with main via symlinks (swap any link for a real dir to customize per-server)
+    for d in "$BASE/server-data/resources"/*; do
+      ln -s "$d" "$INST/$N/server-data/resources/$(basename "$d")"
+    done
+    # server.cfg from main's, with own port + name
+    sed -e "s/0\.0\.0\.0:30120/0.0.0.0:$P/g" \
+        -e "s/sv_hostname \".*\"/sv_hostname \"khaled's FiveM — $N\"/" \
+        -e "s/sets sv_projectName \".*\"/sets sv_projectName \"khaled's FiveM — $N\"/" \
+        "$BASE/server-data/server.cfg" > "$INST/$N/server-data/server.cfg"
+    echo "✔ Server '$N' created (port $P, resources shared with main)."
+    echo "  1. New key (each server needs its own): https://portal.cfx.re/servers/registration-keys"
+    echo "  2. fivem key cfxk_xxxx $N"
+    echo "  3. fivem start $N   → players join: connect $PUBLIC_IP:$P"
+    ;;
+  remove)
+    N="${2:-}"; [ -n "$N" ] && [ "$N" != "main" ] || { echo "usage: fivem remove <name>  (main can't be removed)"; exit 1; }
+    resolve "$N"
+    running && tmux kill-session -t "$SESSION"
+    echo "Delete $INST/$N ? All its data is lost. (y/N)"
+    read -r A; [ "$A" = "y" ] || { echo "Aborted."; exit 0; }
+    rm -rf "$INST/${N:?}"
+    echo "Removed '$N'."
+    ;;
+  list)
+    printf '%-12s %-8s %-7s %s\n' NAME STATE PORT CONNECT
+    for n in $(all_names); do
+      resolve "$n"
+      if running && pgrep -f "FXServer.*$DATA" >/dev/null 2>&1 || { [ "$n" = main ] && running; }; then S=RUNNING; else S=stopped; fi
+      [ -s "$KEYFILE" ] || S="$S(no-key)"
+      printf '%-12s %-8s %-7s connect %s:%s\n' "$n" "$S" "$PORT" "$PUBLIC_IP" "$PORT"
+    done
+    ;;
   key)
-    [ -n "${2:-}" ] || { echo "usage: fivem key <license-key>"; exit 1; }
+    [ -n "${2:-}" ] || { echo "usage: fivem key <license-key> [name]"; exit 1; }
+    resolve "${3:-main}"
     printf '%s\n' "$2" > "$KEYFILE"
     chmod 600 "$KEYFILE"
-    echo "License key saved. Run: fivem start"
+    echo "[$NAME] License key saved. Run: fivem start $NAME"
     ;;
   start)
+    resolve "${2:-main}"
     need_key || exit 1
-    if running; then echo "Already running. Use: fivem status"; exit 0; fi
+    if running; then echo "[$NAME] Already running."; exit 0; fi
     tmux new-session -d -s "$SESSION" \
       "cd '$DATA' && while true; do \
          '$RUN' +exec server.cfg +set sv_licenseKey \"\$(cat '$KEYFILE')\" 2>&1 | tee -a '$LOG'; \
-         echo '[supervisor] server exited, restarting in 5s (Ctrl-C twice in console to stop loop)'; \
+         echo '[supervisor] server exited, restarting in 5s'; \
          sleep 5; \
        done"
-    echo "Started in tmux session '$SESSION' (supervisor auto-restarts on crash)."
-    echo "Console: fivem console   Log: fivem log   Status: fivem status"
+    echo "[$NAME] Started (tmux '$SESSION', port $PORT, supervisor auto-restarts)."
+    ;;
+  startall)
+    for n in $(all_names); do
+      resolve "$n"
+      [ -s "$KEYFILE" ] || continue
+      running || "$0" start "$n"
+    done
     ;;
   stop)
-    if ! running; then echo "Not running."; exit 0; fi
+    resolve "${2:-main}"
+    if ! running; then echo "[$NAME] Not running."; exit 0; fi
     tmux kill-session -t "$SESSION"
-    pkill -f 'FXServer' 2>/dev/null
-    echo "Stopped."
+    [ "$NAME" = "main" ] && pkill -f 'FXServer' 2>/dev/null
+    echo "[$NAME] Stopped."
     ;;
   restart)
-    "$0" stop; sleep 2; "$0" start
+    "$0" stop "${2:-main}"; sleep 2; "$0" start "${2:-main}"
     ;;
   status)
+    resolve "${2:-main}"
     if running && pgrep -f FXServer >/dev/null; then
-      echo "RUNNING (tmux session '$SESSION', pid $(pgrep -f FXServer | head -1))"
+      echo "[$NAME] RUNNING (tmux '$SESSION')"
       ss -lun 2>/dev/null | grep -q ":$PORT" && echo "UDP $PORT: listening" || echo "UDP $PORT: NOT listening yet"
       echo "Public connect: connect $PUBLIC_IP:$PORT"
-      echo "Connect page:   $CONNECT_PAGE"
+      [ "$NAME" = "main" ] && echo "Connect page:   $CONNECT_PAGE"
     elif running; then
-      echo "Supervisor up but server process not running (probably restarting — check: fivem log)"
+      echo "[$NAME] Supervisor up but server not running (check: fivem log $NAME)"
     else
-      echo "STOPPED"
+      echo "[$NAME] STOPPED"
     fi
     ;;
   players)
-    P="$(api players.json)"
-    [ -n "$P" ] || { echo "Server not responding on :$PORT."; exit 1; }
-    N=$(printf '%s' "$P" | grep -o '"name"' | wc -l)
-    D="$(api dynamic.json)"
-    MAX=$(printf '%s' "$D" | sed -n 's/.*"sv_maxclients":"\{0,1\}\([0-9]*\)"\{0,1\}.*/\1/p')
-    echo "Players online: $N / ${MAX:-16}"
-    printf '%s' "$P" | tr '{' '\n' | sed -n 's/.*"name":"\([^"]*\)".*"ping":\([0-9]*\).*/  \1 (\2 ms)/p'
+    resolve "${2:-main}"
+    P_JSON="$(api players.json)"
+    [ -n "$P_JSON" ] || { echo "[$NAME] Not responding on :$PORT."; exit 1; }
+    N_ON=$(printf '%s' "$P_JSON" | grep -o '"name"' | wc -l)
+    MAX=$(api dynamic.json | sed -n 's/.*"sv_maxclients":"\{0,1\}\([0-9]*\)"\{0,1\}.*/\1/p')
+    echo "[$NAME] Players online: $N_ON / ${MAX:-16}"
+    printf '%s' "$P_JSON" | tr '{' '\n' | sed -n 's/.*"name":"\([^"]*\)".*"ping":\([0-9]*\).*/  \1 (\2 ms)/p'
     ;;
   address)
-    echo "Game (F8 console):  connect $PUBLIC_IP:$PORT"
-    echo "One-click link:     fivem://connect/$PUBLIC_IP:$PORT"
-    echo "Connect page:       $CONNECT_PAGE"
+    resolve "${2:-main}"
+    echo "[$NAME] Game (F8):     connect $PUBLIC_IP:$PORT"
+    echo "One-click link: fivem://connect/$PUBLIC_IP:$PORT"
+    [ "$NAME" = "main" ] && echo "Connect page:   $CONNECT_PAGE"
     ;;
   doctor)
-    echo "== fivem doctor — $(date '+%F %T') =="
+    resolve "${2:-main}"
+    echo "== fivem doctor [$NAME] — $(date '+%F %T') =="
     FAIL=0
-    if running && pgrep -f FXServer >/dev/null; then echo "[OK]   FXServer process running"; else echo "[FAIL] FXServer not running (fix: fivem start)"; FAIL=1; fi
+    if running && pgrep -f FXServer >/dev/null; then echo "[OK]   FXServer process running"; else echo "[FAIL] not running (fix: fivem start $NAME)"; FAIL=1; fi
     if ss -lun 2>/dev/null | grep -q ":$PORT"; then echo "[OK]   UDP $PORT listening"; else echo "[FAIL] UDP $PORT not listening"; FAIL=1; fi
     if [ -n "$(api info.json)" ]; then echo "[OK]   HTTP info.json responding"; else echo "[FAIL] info.json not responding"; FAIL=1; fi
-    N=$(api players.json | grep -o '"name"' | wc -l); echo "[INFO] Players online: $N"
+    N_ON=$(api players.json | grep -o '"name"' | wc -l); echo "[INFO] Players online: $N_ON"
     DISK=$(df -h "$BASE" | awk 'NR==2{print $5" used ("$4" free)"}'); echo "[INFO] Disk: $DISK"
-    MEM=$(ps -o rss= -p "$(pgrep -f FXServer | head -1)" 2>/dev/null | awk '{printf "%.0f MB", $1/1024}'); [ -n "$MEM" ] && echo "[INFO] FXServer RAM: $MEM"
     R=$(grep -c '\[supervisor\] server exited' "$LOG" 2>/dev/null || echo 0); echo "[INFO] Crash-restarts since log start: $R"
     echo "-- last 500 log lines: problems --"
     PROBS=$(tail -n 500 "$LOG" 2>/dev/null | grep -Ei 'error|exception|failed|could not|unable to' | grep -viE 'no such export' | tail -n 10)
     if [ -n "$PROBS" ]; then printf '%s\n' "$PROBS" | sed 's/^/  /'; else echo "  (none — log clean)"; fi
-    if [ "$FAIL" = 0 ]; then echo "== VERDICT: HEALTHY =="; else echo "== VERDICT: PROBLEMS FOUND (see FAIL lines) =="; fi
+    if [ "$FAIL" = 0 ]; then echo "== VERDICT: HEALTHY =="; else echo "== VERDICT: PROBLEMS FOUND =="; fi
     ;;
   backup)
     KEEP="${2:-7}"
     mkdir -p "$BACKUP_DIR"
     STAMP=$(date +%Y%m%d-%H%M%S)
     OUT="$BACKUP_DIR/server-data-$STAMP.tar.gz"
-    tar -czf "$OUT" -C "$BASE" --exclude='server-data/cache' server-data 2>/dev/null
-    echo "Backup: $OUT ($(du -h "$OUT" | cut -f1))"
+    tar -czf "$OUT" -C "$BASE" --exclude='server-data/cache' --exclude='instances/*/server-data/cache' server-data $( [ -d "$INST" ] && echo instances ) 2>/dev/null
+    echo "Backup: $OUT ($(du -h "$OUT" | cut -f1)) — main + all servers"
     ls -1t "$BACKUP_DIR"/server-data-*.tar.gz 2>/dev/null | tail -n +$((KEEP+1)) | xargs -r rm -f
     echo "Keeping newest $KEEP backups ($(ls -1 "$BACKUP_DIR" | wc -l) present)."
     ;;
@@ -114,50 +183,61 @@ case "${1:-help}" in
     URL=$(curl -s -m 15 https://changelogs-live.fivem.net/api/changelog/versions/linux/server | sed -n 's/.*"latest_download":"\([^"]*\)".*/\1/p')
     [ -n "$URL" ] || { echo "Could not fetch latest build URL."; exit 1; }
     echo "Latest: $URL"
-    echo "This stops the server, replaces ~/fivem/server, restarts. Continue? (y/N)"
+    echo "This stops ALL servers, replaces ~/fivem/server, restarts them. Continue? (y/N)"
     read -r A; [ "$A" = "y" ] || { echo "Aborted."; exit 0; }
     "$0" backup
     TMP=$(mktemp -d)
     curl -L -o "$TMP/fx.tar.xz" "$URL" || { echo "Download failed."; exit 1; }
-    "$0" stop
+    for n in $(all_names); do "$0" stop "$n"; done
     mv "$BASE/server" "$BASE/server.old.$(date +%s)"
     mkdir -p "$BASE/server"
     tar -xJf "$TMP/fx.tar.xz" -C "$BASE/server" || { echo "Extract failed — restoring old build."; rm -rf "$BASE/server"; mv "$BASE"/server.old.* "$BASE/server"; exit 1; }
     rm -rf "$TMP"
-    "$0" start
+    "$0" startall
     echo "Updated. Old build kept at ~/fivem/server.old.* (delete when happy)."
     ;;
   console)
-    running || { echo "Not running."; exit 1; }
+    resolve "${2:-main}"
+    running || { echo "[$NAME] Not running."; exit 1; }
     echo "(Detach with Ctrl-b then d — do NOT Ctrl-C unless you want to stop the server)"
     tmux attach -t "$SESSION"
     ;;
   cmd)
     shift
-    running || { echo "Not running."; exit 1; }
+    resolve main
+    # allow: fivem cmd <name> <command...> when first word is an instance
+    if [ -d "$INST/${1:-}" ] || [ "${1:-}" = "main" ]; then resolve "$1"; shift; fi
+    running || { echo "[$NAME] Not running."; exit 1; }
     tmux send-keys -t "$SESSION" "$*" Enter
-    echo "Sent: $*"
+    echo "[$NAME] Sent: $*"
     ;;
   log)
+    resolve "${3:-main}"
     tail -n "${2:-40}" "$LOG"
     ;;
   *)
     cat <<'EOF'
-fivem — FiveM (GTA V) server control
+fivem — FiveM (GTA V) server control (multi-server)
 
-  fivem key <key>    save your Cfx.re license key (portal.cfx.re)
-  fivem start        start server (tmux + auto-restart supervisor)
-  fivem stop         stop server
-  fivem restart      restart server
-  fivem status       running state + connect addresses
-  fivem players      who's online right now (name + ping)
-  fivem address      all ways to join (IP, fivem:// link, web page)
-  fivem doctor       full health check + log problem scan
-  fivem backup [n]   backup server-data to ~/fivem/backups (keep n, default 7)
-  fivem update       upgrade FXServer to latest build (asks first)
-  fivem console      attach to live server console (Ctrl-b d to detach)
-  fivem cmd <text>   send a console command (e.g. fivem cmd status)
-  fivem log [n]      show last n log lines (default 40)
+  fivem new <name> [port]   create a NEW server in one command (auto port, shared mods)
+  fivem list                all servers + state + connect address
+  fivem remove <name>       delete a server (asks first)
+
+  fivem key <key> [name]    save Cfx.re license key (one per server, portal.cfx.re)
+  fivem start [name]        start server (tmux + auto-restart supervisor)
+  fivem startall            start every server that has a key
+  fivem stop|restart [name]
+  fivem status [name]       running state + connect address
+  fivem players [name]      who's online (name + ping)
+  fivem address [name]      all ways to join
+  fivem doctor [name]       health check + log problem scan
+  fivem log [n] [name]      last n log lines
+  fivem console [name]      attach to live console (Ctrl-b d to detach)
+  fivem cmd [name] <text>   send a console command
+  fivem backup [n]          backup ALL servers to ~/fivem/backups
+  fivem update              upgrade FXServer build for all servers (asks first)
+
+  (no [name] = "main", the original server on port 30120)
 EOF
     ;;
 esac
