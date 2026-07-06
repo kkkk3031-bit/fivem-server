@@ -103,8 +103,7 @@
   .state-ar { font-size: 11.5px; font-weight: 500; color: var(--muted); margin-top: 1px; }
   .players { font-family: var(--display); font-weight: 900; font-size: 34px; letter-spacing: .02em; }
   .players small { color: var(--muted); font-size: 16px; font-weight: 700; }
-  .card-rows { border-top: 1px solid var(--edge); margin-top: 13px; padding-top: 12px;
-    display: grid; grid-template-columns: repeat(4, 1fr); }
+  .card-rows { display: grid; grid-template-columns: repeat(4, 1fr); }
   .row { display: grid; gap: 3px; text-align: center; padding: 2px 6px; }
   .row + .row { border-left: 1px solid var(--edge); }
   .row .k {
@@ -168,28 +167,29 @@
   button.copy svg { flex: none; }
 
   /* pro button row (Discord / WhatsApp / X) */
-  .btnrow { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: min(420px, 100%); }
+  .btnrow { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: center; max-width: 100%; }
   a.btn {
-    flex: 1; min-width: 118px;
-    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
-    height: 46px; border-radius: 12px; padding: 0 18px;
-    font-family: var(--body); font-weight: 700; font-size: 13.5px; letter-spacing: .01em;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    height: 32px; border-radius: 999px; padding: 0 13px;
+    font-family: var(--body); font-weight: 700; font-size: 11.5px; letter-spacing: .01em;
+    white-space: nowrap;
     text-decoration: none; color: #fff;
     border: 1px solid transparent;
     transition: transform .12s ease, box-shadow .2s ease, filter .15s ease;
   }
-  a.btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+  a.btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
   a.btn:active { transform: translateY(0); filter: brightness(.95); }
-  a.btn:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
-  a.btn svg { flex: none; }
-  a.btn-discord { background: linear-gradient(180deg, #5F6CFF, #4E5BE4); box-shadow: 0 8px 24px rgba(88,101,242,.35); }
-  a.btn-discord:hover { box-shadow: 0 12px 32px rgba(88,101,242,.5); }
-  a.btn-wa { background: linear-gradient(180deg, #2BDF70, #1EBF5C); box-shadow: 0 8px 24px rgba(37,211,102,.3); }
-  a.btn-wa:hover { box-shadow: 0 12px 32px rgba(37,211,102,.45); }
+  a.btn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  a.btn svg { flex: none; width: 14px; height: 14px; }
+  a.btn-discord { background: linear-gradient(180deg, #5F6CFF, #4E5BE4); box-shadow: 0 4px 14px rgba(88,101,242,.35); }
+  a.btn-discord:hover { box-shadow: 0 6px 18px rgba(88,101,242,.5); }
+  a.btn-wa { background: linear-gradient(180deg, #2BDF70, #1EBF5C); box-shadow: 0 4px 14px rgba(37,211,102,.3); }
+  a.btn-wa:hover { box-shadow: 0 6px 18px rgba(37,211,102,.45); }
   a.btn-x {
     background: var(--panel-2); border-color: var(--edge); color: var(--text);
-    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
   }
+  @media (max-width: 400px) { a.btn { padding: 0 10px; font-size: 10.5px; } }
   a.btn-x:hover { border-color: var(--muted); box-shadow: 0 12px 32px rgba(0,0,0,.5); }
 
   /* how-to steps */
@@ -230,7 +230,7 @@
     <div class="eyebrow">GTA V Server · Kuwait</div>
     <h1>Khaled's <span class="accent">FiveM</span></h1>
     <div class="flag" aria-hidden="true"></div>
-    <div class="sub" style="color: var(--amber)">GTA V Multiplayer</div>
+    <div class="sub" style="color: var(--amber)">GTA V Multiplayer Five M Server</div>
   </header>
 
   <div class="card reveal" role="status" aria-live="polite">
@@ -243,12 +243,6 @@
         </div>
       </div>
       <div class="players"><span id="players">–</span><small id="max">/16</small></div>
-    </div>
-    <div class="card-rows">
-      <div class="row"><span class="k">Mode</span><span class="v" id="mode">—</span></div>
-      <div class="row"><span class="k">Map</span><span class="v" id="map">—</span></div>
-      <div class="row"><span class="k">Region</span><span class="v">Kuwait 🇰🇼</span></div>
-      <div class="row"><span class="k">Uptime</span><span class="v">24/7</span></div>
     </div>
   </div>
 
@@ -270,6 +264,30 @@
     </div>
   </div>
 
+  <div class="card reveal" id="whoCard" style="display:none">
+    <div class="row" style="margin-bottom:8px"><span class="k">Online now · <bdi lang="ar">متصلين الحين</bdi></span></div>
+    <div id="who" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+  </div>
+
+  <div class="steps reveal">
+    <div class="step"><div class="n">1</div><div class="t">Own GTA V &amp; install <a href="https://fivem.net" rel="noopener">FiveM</a><div class="t-ar" lang="ar">حمّل فايف إم (يحتاج قراند 5)</div></div></div>
+    <div class="step"><div class="n">2</div><div class="t">Press CONNECT above<div class="t-ar" lang="ar">اضغط زر الاتصال فوق</div></div></div>
+    <div class="step"><div class="n">3</div><div class="t">Spawn in &amp; drive<div class="t-ar" lang="ar">ادخل والعب مع الربع</div></div></div>
+  </div>
+
+  <div class="card reveal" style="padding:14px 18px">
+  <div class="card-rows">
+    <div class="row"><span class="k">Mode</span><span class="v" id="mode">—</span></div>
+    <div class="row"><span class="k">Map</span><span class="v" id="map">—</span></div>
+    <div class="row"><span class="k">Region</span><span class="v">Kuwait 🇰🇼</span></div>
+    <div class="row"><span class="k">Uptime</span><span class="v">24/7</span></div>
+  </div>
+  </div>
+
+  <footer class="reveal">
+    <div class="credit">Program by <a href="https://x.com/KhaledQ84Ever" rel="noopener" target="_blank">𝕏 @KhaledQ84Ever</a> · <bdi lang="ar">برمجة خالد</bdi></div>
+    <div style="color: var(--amber)">If the button does nothing: FiveM → F8 → paste the command<br><bdi lang="ar">إذا الزر ما اشتغل: افتح فايف إم → اضغط F8 → الصق الأمر</bdi></div>
+    <div style="margin-top:10px">
   <div class="btnrow reveal">
     <a class="btn btn-discord" href="https://discord.gg/zbHbSsCUua" rel="noopener" target="_blank" aria-label="Join our Discord">
       <svg width="20" height="16" viewBox="0 0 71 55" fill="currentColor" aria-hidden="true"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.4.4l-1.8 3.7a54 54 0 0 0-16.2 0L25.5.4a58.4 58.4 0 0 0-14.7 4.6C1.6 18.7-.9 32.2.3 45.4a58.9 58.9 0 0 0 18 9.1l3.8-6.2a38 38 0 0 1-6-2.9l1.5-1.1a41.9 41.9 0 0 0 36 0l1.5 1.1a38 38 0 0 1-6 2.9l3.8 6.2a58.7 58.7 0 0 0 18-9.1c1.5-15.3-2.4-28.6-10.8-40.5ZM23.7 37.3c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.4 7.2s-2.9 7.2-6.4 7.2Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.4 7.2s-2.8 7.2-6.4 7.2Z"/></svg>
@@ -284,21 +302,7 @@
       <span>@KhaledQ84Ever</span>
     </a>
   </div>
-
-  <div class="card reveal" id="whoCard" style="display:none">
-    <div class="row" style="margin-bottom:8px"><span class="k">Online now · <bdi lang="ar">متصلين الحين</bdi></span></div>
-    <div id="who" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-  </div>
-
-  <div class="steps reveal">
-    <div class="step"><div class="n">1</div><div class="t">Own GTA V &amp; install <a href="https://fivem.net" rel="noopener">FiveM</a><div class="t-ar" lang="ar">حمّل فايف إم (يحتاج قراند 5)</div></div></div>
-    <div class="step"><div class="n">2</div><div class="t">Press CONNECT above<div class="t-ar" lang="ar">اضغط زر الاتصال فوق</div></div></div>
-    <div class="step"><div class="n">3</div><div class="t">Spawn in &amp; drive<div class="t-ar" lang="ar">ادخل والعب مع الربع</div></div></div>
-  </div>
-
-  <footer class="reveal">
-    <div class="credit">Program by <a href="https://x.com/KhaledQ84Ever" rel="noopener" target="_blank">𝕏 @KhaledQ84Ever</a> · <bdi lang="ar">برمجة خالد</bdi></div>
-    <div style="color: var(--amber)">If the button does nothing: FiveM → F8 → paste the command<br><bdi lang="ar">إذا الزر ما اشتغل: افتح فايف إم → اضغط F8 → الصق الأمر</bdi></div>
+    </div>
   </footer>
 
 <script>
