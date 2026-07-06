@@ -104,4 +104,4 @@ cd connect-page && railway up --detach --service fivem-connect
 
 ---
 
-<p align="center"><img src="assets/icon.svg" width="56" alt=""><br><sub>Private server · Kuwait · not affiliated with Cfx.re or Rockstar Games</sub></p>
+<p align="center"><img src="assets/icon.svg" width="56" alt=""><br><sub>Private server · Kuwait</sub></p>
